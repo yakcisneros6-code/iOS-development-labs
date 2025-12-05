@@ -6,48 +6,51 @@
 //
 
 import SwiftUI
+import Foundation
 
 struct EditProfileView: View {
-    //enviorment will dismmiss and close the sheet
     @Environment(\.dismiss) var dismiss
+    @Binding var user: User
     
-    @State private var firstName = ""
-       @State private var lastName = ""
-       @State private var username = ""
-       @State private var bio = ""
+    @State private var username: String
+    @State private var bio: String
+    
+    init(user: Binding<User>) {
+        _user = user
+        _username = State(initialValue: user.wrappedValue.username)
+        _bio = State(initialValue: user.wrappedValue.bio) 
+    }
     
     var body: some View {
         NavigationStack {
-                    Form {
-                        Section(header: Text("Name")) {
-                            TextField("First Name", text: $firstName)
-                            TextField("Last Name", text: $lastName)
-                        }
-                        
-                        Section(header: Text("Username")) {
-                            TextField("Username", text: $username)
-                        }
-                        
-                        Section(header: Text("Bio")) {
-                            TextField("Bio", text: $bio)
-                        }
-                        
-                        Section {
-                            Button("Save") {
-                                //dismis is just closing rn not acutally saving it
-                                dismiss()
-                            }
-                            .foregroundColor(.blue)
-                        }
+            Form {
+                Section(header: Text("Username")) {
+                    TextField("Username", text: $username)
+                        .textInputAutocapitalization(.none)
+                }
+                
+                Section(header: Text("Bio")) {
+                    TextEditor(text: $bio)
+                        .frame(minHeight: 100)
+                }
+                
+                Section {
+                    Button("Save") {
+                        user.username = username
+                        user.bio = bio
+                        dismiss()
                     }
-                    .navigationTitle("Edit Profile")
+                    .disabled(username.isEmpty)
+                }
+            }
+            .navigationTitle("Edit Profile")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
                 }
             }
         }
-
-        struct EditProfileView_Previews: PreviewProvider {
-            static var previews: some View {
-                EditProfileView()
-            }
-        }
-    
+    }
+}

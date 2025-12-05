@@ -5,69 +5,70 @@
 //  Created by Yaquelin Cisneros on 11/12/25.
 //
 import SwiftUI
+import Foundation
 
 struct ProfileView: View {
-    
-    @State private var showEditProfile = false
-    
-    
-    let recentPost = Post(
-        userId: UUID(),
-        title: "Almost finished app",
-        body: "I am almost done with Project 7",
-        likesCount: 12,
-        commentsCount: 3
-    )
-
-
-    let gradient = Gradient(colors: [.blue, .purple])
+    @Binding var user: User
+    @State private var showingEditSheet = false
     
     var body: some View {
-        VStack {
-            Rectangle()
-                .fill(Color.pink.opacity(0.2))
-                .frame(height: 120)
-                .ignoresSafeArea(edges: .top)
-            
-            HStack(alignment: .top, spacing: 20) {
-                VStack {
-                    Image("Image")
-                        .resizable()
-                        .aspectRatio(contentMode: .fill) // fixed typo here
-                        .frame(width: 200, height: 200)
-                        .clipShape(Circle())
-                        .clipped()
-                        .padding(.top, 44)
+        NavigationStack {
+            VStack(spacing: 20) {
+                
+                
+                ZStack {
                     
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Anastasia Black")
-                            .font(.title2)
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.purple.opacity(0.7), Color.purple],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 130, height: 130)
+                    
+                    
+                    if let avatar = user.avatarName, !avatar.isEmpty {
+                        Image("Image")
+                            .resizable()
+                            .frame(width: 120, height: 120)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white, lineWidth: 2))
+                    } else {
+                        Image(systemName: "person.circle.fill")
+                            .resizable()
+                            .frame(width: 120, height: 120)
                             .foregroundColor(.white)
-                        Text("Bio")
-                            .foregroundColor(.white)
-                        Text("Interests")
-                            .foregroundColor(.white)
-                        
-                        Text("@sista")
-                            .font(.system(size: 18))
-                            .bold()
-                            .foregroundColor(.white)
-                        
-                        Button("Edit Profile") {
-                            showEditProfile = true
-                        }
-                        .sheet(isPresented: $showEditProfile) {
-                            EditProfileView()
-                        }
                     }
+                }
+                
+                // Username
+                Text(user.username)
+                    .font(.largeTitle)
+                    .bold()
+                
+                
+                if !user.bio.isEmpty {
+                    Text(user.bio)
+                        .font(.body)
+                        .foregroundColor(.gray)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 30)
                 }
                 
                 Spacer()
             }
-            .background(
-                LinearGradient(gradient: gradient, startPoint: .top, endPoint: .bottom)
-                    .ignoresSafeArea()
-            )
+            .padding()
+            .navigationTitle("Profile")
+            .toolbar {
+                Button("Edit") {
+                    showingEditSheet = true
+                }
+            }
+            .sheet(isPresented: $showingEditSheet) {
+                EditProfileView(user: $user)
+            }
         }
     }
 }

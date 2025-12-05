@@ -27,6 +27,7 @@ extension URL {
     }
 }
 
+
 // my model for each iTunes item
 struct StoreItem: Codable {
     let name: String
@@ -91,7 +92,10 @@ func fetchItems(matching query: [String: String]) async throws -> [StoreItem] {
         throw StoreItemError.itemsNotFound
     }
     
-    print(String(data: data, encoding: .utf8))
+    if let jsonString = String(data: data, encoding: .utf8) {
+        print(jsonString)
+    }
+
 
     //  Turn the JSON data we got from the internet into Swift objects
     let decoder = JSONDecoder()
