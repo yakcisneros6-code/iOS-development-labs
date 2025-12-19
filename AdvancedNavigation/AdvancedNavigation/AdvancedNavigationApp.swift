@@ -8,6 +8,8 @@
 import SwiftUI
 
 
+
+@main
 struct AdvancedNavigationApp: App {
     var body: some Scene {
         WindowGroup {

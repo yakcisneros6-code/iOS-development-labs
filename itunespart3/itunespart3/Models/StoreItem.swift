@@ -5,7 +5,6 @@
 //
 
 import Foundation
-import Combine
 
 struct StoreItem: Decodable, Identifiable {
     let id = UUID()
@@ -14,7 +13,6 @@ struct StoreItem: Decodable, Identifiable {
     let kind: String
     let description: String
     let artworkURL: URL
-    
     
     enum CodingKeys: String, CodingKey {
         case name = "trackName"
@@ -27,7 +25,6 @@ struct StoreItem: Decodable, Identifiable {
     enum AdditionalKeys: String, CodingKey {
         case longDescription
     }
-    
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)

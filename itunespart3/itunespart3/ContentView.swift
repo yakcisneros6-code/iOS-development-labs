@@ -1,41 +1,44 @@
 //
-
-
+//content view
 
 import SwiftUI
 
 struct ContentView: View {
+    @State private var searchText: String = ""
+    @State private var items: [StoreItem] = []
     
-    @State private var viewModel = StoreItemListViewModel()
-
+    private let viewModel = StoreItemListViewModel()
+    
     var body: some View {
         NavigationStack {
             VStack {
-                TextField("Search", text: $viewModel.searchTerm)
+                TextField("Search", text: $searchText)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .padding()
-
+                    .submitLabel(.search)
+                    .onSubmit {
+                        Task {
+                            await performSearch()
+                        }
+                    }
+                
                 Button("Search") {
                     Task {
-                        await viewModel.fetchItems()
+                        await performSearch()
                     }
                 }
                 .padding()
-
-                List(viewModel.items, id: \.name) { item in
+                
+                List(items, id: \.id) { item in
                     VStack(alignment: .leading) {
-                        
-                        
                         AsyncImage(url: item.artworkURL) { image in
-                            image
-                                .resizable()
-                                .scaledToFit()
+                            image.resizable()
+                                 .scaledToFit()
                         } placeholder: {
                             ProgressView()
                         }
                         .frame(width: 100, height: 100)
                         .cornerRadius(8)
-
                         
                         Text(item.name).font(.headline)
                         Text(item.artist).font(.subheadline)
@@ -48,7 +51,10 @@ struct ContentView: View {
             .navigationTitle("iTunes Search")
         }
     }
+    
+    private func performSearch() async {
+        viewModel.searchTerm = searchText
+        await viewModel.fetchMatchingItems()
+        items = viewModel.items
+    }
 }
-
-
-
