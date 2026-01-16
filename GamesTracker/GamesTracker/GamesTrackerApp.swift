@@ -12,28 +12,8 @@ import SwiftData
 struct GameTrackerApp: App {
     var body: some Scene {
         WindowGroup {
-            RootView()
+            GamesListViewModel()
         }
         .modelContainer(for: [Game.self, Player.self])
-    }
-}
-
-
-struct RootView: View {
-    @State private var gamesViewModel = GamesListViewModel() 
-    @State private var showingAddGame = false
-    @State private var selectedGame: Game? = nil
-
-    var body: some View {
-        NavigationView {
-            GamesListView(viewModel: $gamesViewModel, onAddGame: {
-                showingAddGame = true
-            })
-            .sheet(isPresented: $showingAddGame) {
-                AddGameView(viewModel: $gamesViewModel) {
-                    showingAddGame = false
-                }
-            }
-        }
     }
 }

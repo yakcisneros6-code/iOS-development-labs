@@ -5,98 +5,68 @@
 //  Created by Yaquelin Cisneros on 12/17/25.
 //
 
-import Foundation
 import SwiftUI
+import SwiftData
 
-class GamesListViewModel {
-    
-private var storedGames: [Game] = []
+struct GamesListViewModel: View {
+    @Environment(\.modelContext) private var context
+    @Query(sort: \Game.createdAt, order: .reverse)
+    private var games: [Game]
 
-    
-    var games: [Game] {
-        storedGames
-    }
+    @State private var showAddGame = false
 
-  
-private let saveKey = "SavedGames"
+    var body: some View {
+        NavigationStack {
+            List {
+                ForEach(games) { game in
+                    NavigationLink {
+                        ScoreboardView(game: game)
+                    } label: {
+                        VStack(alignment: .leading) {
+                            Text(game.name)
+                                .font(.headline)
 
-    
-    init() {
-        loadGames()
-        sortGames()
-    }
+                            Text(currentWinnerText(for: game))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .onDelete { indexSet in
+                    for index in indexSet {
+                        context.delete(games[index])
+                    }
+                }
+            }
+            .navigationTitle("Games")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    EditButton()
+                }
 
-
-    func addGame(_ game: Game) {
-        storedGames.append(game)
-        sortGames()
-        saveGames()
-    }
-
-    func removeGames(at offsets: IndexSet) {
-        storedGames.remove(atOffsets: offsets)
-        sortGames()
-        saveGames()
-    }
-
-    func moveGames(from source: IndexSet, to destination: Int) {
-        storedGames.move(fromOffsets: source, toOffset: destination)
-        saveGames()
-    }
-
-    func updateGame(at index: Int, with game: Game) {
-        guard storedGames.indices.contains(index) else { return }
-        storedGames[index] = game
-        sortGames()
-        saveGames()
-    }
-//$1 = secomd item
-    func sortGames() {
-        storedGames.sort { $0.date > $1.date }
-    }
-
-    func winners(for game: Game) -> [Player] {
-        return game.winner()
-    }
-
-  
-
-    func addPlayer(to gameID: UUID, player: Player) {
-        guard let index = storedGames.firstIndex(where: { $0.id == gameID }) else { return }
-        storedGames[index].players.append(player)
-        storedGames[index].sortPlayers()
-        saveGames()
-    }
-
-    func removePlayers(at offsets: IndexSet, from gameID: UUID) {
-        guard let index = storedGames.firstIndex(where: { $0.id == gameID }) else { return }
-        for offset in offsets.sorted(by: >) {
-            storedGames[index].players.remove(at: offset)
-        }
-        storedGames[index].sortPlayers()
-        saveGames()
-    }
-
-    func updatePlayerScore(gameID: UUID, playerID: UUID, newScore: Int) {
-        guard let gameIndex = storedGames.firstIndex(where: { $0.id == gameID }) else { return }
-        guard let playerIndex = storedGames[gameIndex].players.firstIndex(where: { $0.id == playerID }) else { return }
-        storedGames[gameIndex].players[playerIndex].score = newScore
-        storedGames[gameIndex].sortPlayers()
-        saveGames()
-    }
-
-    //games save on my phone
-    private func saveGames() {
-        if let encoded = try? JSONEncoder().encode(storedGames) {
-            UserDefaults.standard.set(encoded, forKey: saveKey)
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showAddGame = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
+            }
+            .sheet(isPresented: $showAddGame) {
+                AddGameView()
+            }
         }
     }
-//load my games
-    private func loadGames() {
-        if let data = UserDefaults.standard.data(forKey: saveKey),
-           let decoded = try? JSONDecoder().decode([Game].self, from: data) {
-            storedGames = decoded
+
+    private func currentWinnerText(for game: Game) -> String {
+        guard !game.players.isEmpty else {
+            return "No players yet"
         }
+
+        let sortedPlayers = game.players.sorted {
+            game.winnerByHighestScore ? $0.score > $1.score : $0.score < $1.score
+        }
+
+        return "Winning: \(sortedPlayers.first!.name)"
     }
 }
-

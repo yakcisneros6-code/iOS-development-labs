@@ -8,60 +8,42 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var countdown: Int = 5
-    @State private var gamestart: Bool = false
-    @State private var countdownStarted: Bool = false
-    @State private var number: Int = 0
-    let numbers: [Int] = [1, 2, 3, 4, 5]
-    
-    let countdownDuration: Double = 1.0
-    
+@Namespace private var namespace
+    @State private var countDown = 5
+    @State private var gameStarted = false
+
     var body: some View {
-        VStack(spacing: 50) {
-            if countdownStarted || gamestart {
-                CountDownView(countdown: $countdown, gamestart: $gamestart)
-                    .frame(height: 150)
+        VStack(spacing: 40) {
+
+            if gameStarted {
+                CountdownDisplay(
+                    number: countDown,
+                    namespace: namespace
+                )
+
             }
-            
-            if gamestart {
-                Text("\(number)")
-                    .font(.largeTitle)
-                    .bold()
-                    .foregroundColor(.pink)
+
+            Button("Start Countdown") {
+                startCountdown()
             }
-            
-            Button("Start Game") {
-                startGame()
-            }
-            .foregroundColor(.white)
             .padding()
-            .background(LinearGradient(colors: [Color.pink, Color.purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+            .foregroundColor(.white)
+            .background(Color.pink)
             .cornerRadius(12)
-            .shadow(color: Color.purple.opacity(0.4), radius: 10, x: 0, y: 5)
-            .disabled(countdownStarted)
+            .disabled(gameStarted)
         }
         .padding()
-        .background(Color.pink.opacity(0.1))
-        .cornerRadius(20)
-        .padding()
     }
-    
-    func startGame() {
-        countdownStarted = true
-        gamestart = false
-        countdown = 5
-        number = 0
-        
+
+    func startCountdown() {
+        gameStarted = true
+        countDown = 5
+
         Task {
-            for i in (1...5).reversed() {
-                countdown = i
-                try? await Task.sleep(for: .seconds(countdownDuration))
+            for value in stride(from: 5, through: 0, by: -1) {
+                countDown = value
+                try? await Task.sleep(for: .seconds(1))
             }
-            
-            try? await Task.sleep(for: .seconds(0.5)) 
-            gamestart = true
-            number = numbers.randomElement() ?? 0
-            countdownStarted = false
         }
     }
 }

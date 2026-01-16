@@ -8,15 +8,13 @@ import SwiftUI
 import SwiftData
 
 struct ScoreboardView: View {
-    let game: Game
+    var game: Game
 
-    @Environment(\.modelContext) private var modelContext
-    @State private var showingAddPlayer = false
-    @State private var bouncePlayerID: UUID? = nil
+    @State private var showAddPlayer = false
 
     private var sortedPlayers: [Player] {
         game.players.sorted {
-            game.sortHighestFirst ? $0.score > $1.score : $0.score < $1.score
+            game.sortByHighestScore ? $0.score > $1.score : $0.score < $1.score
         }
     }
 
@@ -25,76 +23,49 @@ struct ScoreboardView: View {
             ForEach(sortedPlayers) { player in
                 HStack {
                     Image(systemName: "person.fill")
-                        .font(.title2)
+                        .foregroundColor(.pink)
 
                     Text(player.name)
-                        .font(.body)
-                        .padding(.leading, 5)
 
                     Spacer()
 
-                    Stepper(
-                        "",
-                        value: Binding(
-                            get: { player.score },
-                            set: { newScore in
-                                withAnimation {
-                                    player.score = newScore
-                                }
-                            }
-                        ),
-                        in: 0...20
-                    )
+                    Stepper("") {
+                        withAnimation {
+                            player.score += 1
+                        }
+                    } onDecrement: {
+                        withAnimation {
+                            player.score -= 1
+                        }
+                    }
                     .labelsHidden()
-                    .frame(width: 100)
 
                     Text("\(player.score)")
-                        .frame(width: 30, alignment: .trailing)
+                        .frame(width: 30)
                 }
-                .padding(.vertical, 5)
-                .scaleEffect(player.id == bouncePlayerID ? 1.3 : 1.0)
-                .animation(
-                    .spring(response: 0.3, dampingFraction: 0.3),
-                    value: bouncePlayerID
-                )
             }
             .onDelete { indexSet in
-                withAnimation {
-                    for index in indexSet {
-                        modelContext.delete(sortedPlayers[index])
-                    }
+                for index in indexSet {
+                    game.players.remove(at: index)
                 }
             }
         }
-        .listStyle(.plain)
         .navigationTitle("Scoreboard")
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 EditButton()
             }
+
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    showingAddPlayer = true
+                    showAddPlayer = true
                 } label: {
                     Image(systemName: "plus")
                 }
             }
         }
-        .sheet(isPresented: $showingAddPlayer) {
-            AddPlayerView { playerName in
-                let newPlayer = Player(name: playerName)
-                withAnimation {
-                    game.players.append(newPlayer)
-                }
-                animateBounce(playerID: newPlayer.id)
-            }
-        }
-    }
-
-    private func animateBounce(playerID: UUID) {
-        bouncePlayerID = playerID
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            bouncePlayerID = nil
+        .sheet(isPresented: $showAddPlayer) {
+            AddPlayerView(game: game)
         }
     }
 }

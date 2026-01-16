@@ -1,4 +1,4 @@
-//view model
+//storeitemlistview model
 
 import Foundation
 

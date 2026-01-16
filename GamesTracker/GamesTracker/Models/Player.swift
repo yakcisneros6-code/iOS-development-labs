@@ -5,15 +5,14 @@
 //  Created by Yaquelin Cisneros on 12/17/25.
 //
 
-import Foundation
+import SwiftData
 
-struct Player: Identifiable , Codable {
-    let id: UUID
+@Model
+class Player {
     var name: String
     var score: Int
 
-    init(id: UUID = UUID(), name: String, score: Int = 0) {
-        self.id = id
+    init(name: String, score: Int = 0) {
         self.name = name
         self.score = score
     }

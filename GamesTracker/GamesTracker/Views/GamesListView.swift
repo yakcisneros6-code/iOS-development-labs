@@ -6,60 +6,67 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct GamesListView: View {
-    @Binding var viewModel: GamesListViewModel
-    var onAddGame: (() -> Void)? = nil
+    @Environment(\.modelContext) private var context
+    @Query(sort: \Game.createdAt, order: .reverse)
+    private var games: [Game]
+
+    @State private var showAddGame = false
 
     var body: some View {
-        List {
-            ForEach(viewModel.games) { game in
-                NavigationLink(
-                    destination: ScoreboardView(
-                        viewModel: ScoreboardViewModel(
-                            players: game.players,
-                            sortByHighestScore: game.sortByHighestScore
-                        )
-                    )
-                ) {
-                    HStack(spacing: 15) {
-                        Image(systemName: "gamecontroller.fill")
-                            .foregroundColor(.pink)
-                            .font(.title2)
-//pink because i like it 
+        NavigationStack {
+            List {
+                ForEach(games) { game in
+                    NavigationLink {
+                        ScoreboardView(game: game)
+                    } label: {
                         VStack(alignment: .leading) {
                             Text(game.name)
                                 .font(.headline)
-                            if let winner = game.winner().first {
-                                Text("Current winner: \(winner.name)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.purple)
-                            }
+
+                            Text(currentWinnerText(for: game))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
                         }
-                        Spacer()
                     }
-                    .padding()
-                    .background(Color.pink.opacity(0.1))
-                    .cornerRadius(12)
+                }
+                .onDelete { indexSet in
+                    for index in indexSet {
+                        context.delete(games[index])
+                    }
                 }
             }
-            .onDelete { indexSet in
-                withAnimation { viewModel.removeGames(at: indexSet) }
+            .navigationTitle("Games")
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    EditButton()
+                }
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showAddGame = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                }
             }
-            .onMove { indices, newOffset in
-                withAnimation { viewModel.moveGames(from: indices, to: newOffset) }
+            .sheet(isPresented: $showAddGame) {
+                AddGameView()
             }
         }
-        .listStyle(PlainListStyle())
-        .navigationTitle("Games")
-        .navigationBarItems(
-            leading: EditButton(),
-            trailing: Button(action: { onAddGame?() }) {
-                Image(systemName: "plus")
-                    .foregroundColor(.pink)
-                    .font(.title2)
-            }
-        )
+    }
+
+    private func currentWinnerText(for game: Game) -> String {
+        guard !game.players.isEmpty else {
+            return "No players yet"
+        }
+
+        let sortedPlayers = game.players.sorted {
+            game.winnerByHighestScore ? $0.score > $1.score : $0.score < $1.score
+        }
+
+        return "Winning: \(sortedPlayers.first!.name)"
     }
 }
 
